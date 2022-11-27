@@ -35,6 +35,10 @@ class Game:
         self.all_sprites = pygame.sprite.Group()
         self.tiles_grid = self.create_game()
         self_tiles_completed = self.create_game()
+        self.draw_tiles()
+        self.test = UIElement(500, 500, "TEST")
+        self.button = Button(400,400,200,100,"Shuffle",WHITE, BLACK)
+
 
     def draw_tiles(self):
         self.tiles = []
@@ -68,7 +72,8 @@ class Game:
         self.screen.fill(BGCOLOUR)
         self.draw_grid()
         self.all_sprites.draw(self.screen)
-        self.draw_tiles()
+        self.test.draw(self.screen)
+        self.button.draw(self.screen)
         pygame.display.flip()
 
     def events(self):
@@ -76,6 +81,34 @@ class Game:
             if event.type == pygame.QUIT:
                 pygame.quit()
                 quit(0)
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_x, mouse_y = pygame.mouse.get_pos()
+                for row, tiles in enumerate(self.tiles):
+                    for col, tile in enumerate(tiles):
+                        if tile.click(mouse_x, mouse_y):
+                            if tile.right() and self.tiles_grid[row][col + 1] == 0:
+                                self.tiles_grid[row][col], self.tiles_grid[row][col + 1] = self.tiles_grid[row][
+                                                                                               col + 1], \
+                                                                                           self.tiles_grid[row][col]
+
+                            if tile.left() and self.tiles_grid[row][col - 1] == 0:
+                                self.tiles_grid[row][col], self.tiles_grid[row][col - 1] = self.tiles_grid[row][
+                                                                                               col - 1], \
+                                                                                           self.tiles_grid[row][col]
+
+                            if tile.up() and self.tiles_grid[row - 1][col] == 0:
+                                self.tiles_grid[row][col], self.tiles_grid[row - 1][col] = self.tiles_grid[row - 1][
+                                                                                               col], \
+                                                                                           self.tiles_grid[row][col]
+
+                            if tile.down() and self.tiles_grid[row + 1][col] == 0:
+                                print(tile.text)
+                                self.tiles_grid[row][col], self.tiles_grid[row + 1][col] = self.tiles_grid[row + 1][
+                                                                                               col], \
+                                                                                           self.tiles_grid[row][col]
+
+                            self.draw_tiles()
 
 
 game = Game()
