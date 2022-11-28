@@ -15,6 +15,11 @@ title = str((Size - 1)) + " Puzzle Game"
 
 class Game:
     def __init__(self):
+        self.previous_choice = ""
+        self.start_shuffle = False
+        self.start_game = False
+        self.shuffle_time = 0
+        self.elapsed_time = 0
         pygame.init()
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
         pygame.display.set_caption(title)
@@ -36,9 +41,10 @@ class Game:
         self.tiles_grid = self.create_game()
         self_tiles_completed = self.create_game()
         self.draw_tiles()
-        self.test = UIElement(500, 500, "TEST")
-        self.button = Button(400,400,200,100,"Shuffle",WHITE, BLACK)
-
+        self.buttons_list = []
+        self.buttons_list.append(Button(775, 100, 200, 50, "Shuffle", WHITE, BLACK))
+        self.buttons_list.append(Button(775, 170, 200, 50, "Reset", WHITE, BLACK))
+        self.buttons_list.append(Button(775, 240, 200, 50, "Solve", WHITE, BLACK))
 
     def draw_tiles(self):
         self.tiles = []
@@ -58,8 +64,59 @@ class Game:
             self.update()
             self.draw()
 
+    def shuffle(self):
+        possible_moves = []
+        for row, tiles in enumerate(self.tiles):
+            for col, tile in enumerate(tiles):
+                if tile.text == "empty":
+                    if tile.right():
+                        possible_moves.append("right")
+                    if tile.left():
+                        possible_moves.append("left")
+                    if tile.up():
+                        possible_moves.append("up")
+                    if tile.down():
+                        possible_moves.append("down")
+                    break
+            if len(possible_moves) > 0:
+                break
+
+        if self.previous_choice == "left":
+            possible_moves.remove("right") if "right" in possible_moves else possible_moves
+        elif self.previous_choice == "right":
+            possible_moves.remove("left") if "left" in possible_moves else possible_moves
+        elif self.previous_choice == "down":
+            possible_moves.remove("up") if "up" in possible_moves else possible_moves
+        elif self.previous_choice == "up":
+            possible_moves.remove("down") if "down" in possible_moves else possible_moves
+
+        choice = random.choice(possible_moves)
+        self.previous_choice = choice
+        if choice == "right":
+            self.tiles_grid[row][col], self.tiles_grid[row][col + 1] = self.tiles_grid[row][
+                                                                           col + 1], \
+                                                                       self.tiles_grid[row][col]
+        if choice == "left":
+            self.tiles_grid[row][col], self.tiles_grid[row][col - 1] = self.tiles_grid[row][
+                                                                           col - 1], \
+                                                                       self.tiles_grid[row][col]
+        if choice == "up":
+            self.tiles_grid[row][col], self.tiles_grid[row - 1][col] = self.tiles_grid[row - 1][
+                                                                           col], \
+                                                                       self.tiles_grid[row][col]
+        if choice == "down":
+            self.tiles_grid[row][col], self.tiles_grid[row + 1][col] = self.tiles_grid[row + 1][
+                                                                           col], \
+                                                                       self.tiles_grid[row][col]
+
     def update(self):
         self.all_sprites.update()
+        if self.start_shuffle:
+            self.shuffle()
+            self.draw_tiles()
+            self.shuffle_time += 1
+            if self.shuffle_time >= 100:
+                self.start_shuffle = False
 
     def draw_grid(self):
         for row in range(-1, GAMESIZE * TILESIZE, TILESIZE):
@@ -72,8 +129,8 @@ class Game:
         self.screen.fill(BGCOLOUR)
         self.draw_grid()
         self.all_sprites.draw(self.screen)
-        self.test.draw(self.screen)
-        self.button.draw(self.screen)
+        for button in self.buttons_list:
+            button.draw(self.screen)
         pygame.display.flip()
 
     def events(self):
@@ -109,6 +166,13 @@ class Game:
                                                                                            self.tiles_grid[row][col]
 
                             self.draw_tiles()
+                for button in self.buttons_list:
+                    if button.click(mouse_x, mouse_y):
+                        if button.text == "Reset":
+                            self.new()
+                        if button.text == "Shuffle":
+                            self.shuffle_time = 0
+                            self.start_shuffle = True
 
 
 game = Game()
