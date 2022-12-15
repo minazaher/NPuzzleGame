@@ -1,4 +1,6 @@
 import math
+import random
+import time
 from sprite import *
 from settings import *
 from solver import *
