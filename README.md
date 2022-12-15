@@ -1,3 +1,3 @@
-# NPuzzleGame
-## a python N Puzzle Slider Solver With GUI 
+# N-PuzzleGame
+## Python N-Puzzle Slider Solver With GUI 
 ### Built with Pygame

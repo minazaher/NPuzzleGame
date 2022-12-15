@@ -1,9 +1,4 @@
 import math
-from copy import deepcopy
-
-import pygame
-import random
-import time
 from sprite import *
 from settings import *
 from solver import *
@@ -24,24 +19,7 @@ class Game:
         self.start_timer = False
         self.solve = False
         self.solve_epochs = 0
-        self.elapsed_time = 0
-        self.timer = 0
-
-
-        # self.high_score = float(self.get_high_scores()[0])
-        self.visited = []
-        self.path = []
         self.empty_tile = (-1, -1)
-        self.frontier = []
-    #
-    # def get_high_scores(self):
-    #     with open("high_score.txt", "r") as file:
-    #         scores = file.read().splitlines()
-    #     return scores
-    #
-    # def save_score(self):
-    #     with open("high_score.txt", "w") as file:
-    #         file.write(str("%.3f\n" % self.high_score))
 
     def create_game(self):
         grid = [[x + y * self.game_size for x in range(1, self.game_size + 1)] for y in range(self.game_size)]
@@ -68,8 +46,6 @@ class Game:
 
     def apply_choice(self, choice):
         row,  col = self.get_empty_tile()
-        if choice not in self.get_possible_moves(row, col):
-            return
         if choice == "right":
             self.tiles_grid[row][col], self.tiles_grid[row][col + 1] = self.tiles_grid[row][col + 1], \
                                                                        self.tiles_grid[row][col]
@@ -82,24 +58,7 @@ class Game:
         elif choice == "down":
             self.tiles_grid[row][col], self.tiles_grid[row + 1][col] = self.tiles_grid[row + 1][col], \
                                                                    self.tiles_grid[row][col]
-    def move(self, move):
-        grid = deepcopy(self.tiles_grid)
-        return self.get_apply_choice(move, self.empty_tile[0], self.empty_tile[1], grid)
 
-    def get_apply_choice(self, x, row, col, tiles_grid):
-        if x == "right":
-            tiles_grid[row][col], tiles_grid[row][col + 1] = tiles_grid[row][col + 1], \
-                                                             tiles_grid[row][col]
-        elif x == "left":
-            tiles_grid[row][col], tiles_grid[row][col - 1] = tiles_grid[row][col - 1], \
-                                                             tiles_grid[row][col]
-        elif x == "up":
-            tiles_grid[row][col], tiles_grid[row - 1][col] = tiles_grid[row - 1][col], \
-                                                             tiles_grid[row][col]
-        elif x == "down":
-            tiles_grid[row][col], tiles_grid[row + 1][col] = tiles_grid[row + 1][col], \
-                                                             tiles_grid[row][col]
-        return tiles_grid
 
     def make_move(self, selector, shuffle=False):
         possible_moves = []
@@ -140,13 +99,6 @@ class Game:
     def shuffle(self):
         self.make_move(random.choice, shuffle=True)
 
-    def play(self):
-        if self.tiles_grid == self.tiles_grid_completed:
-            print("You win!")
-            self.solve = False
-        else:
-            self.make_move(sol.selector)
-        print("Path ", self.path)
 
     def draw_tiles(self):
         self.tiles = []
@@ -283,13 +235,10 @@ class Game:
 
 n = int(input("Enter the size of the puzzle: "))
 game = Game(n)
-
-
 sol = Solver(game)
 
 
 while True:
     game.new()
     game.run()
-
     sol.solve()
