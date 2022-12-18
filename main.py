@@ -138,7 +138,7 @@ class Game:
         self.draw_tiles()
 
     def run(self):
-        self.playing = True
+        self.playing= True
         while self.playing:
             self.clock.tick(FPS)
             self.events()
@@ -221,6 +221,8 @@ class Game:
 
                 for button in self.buttons_list:
                     available_algo = ["Misplaced", "Gaschnig", "Misplaced C", "Gaschnig C", "Manhattan", "Manhattan C", "LinearConflict", "LinearConf C"]
+                    # F(X) = G(X) + H(X)
+
                     if button.click(mouse_x, mouse_y):
                         if button.text == "Shuffle":
                             self.shuffle_time = 0
