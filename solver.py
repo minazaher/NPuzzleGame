@@ -1,6 +1,7 @@
 from copy import deepcopy
 from heapq import heappush, heappop
 import pygame
+import time,sys
 
 row = [1, 0, -1, 0]
 col = [0, -1, 0, 1]
@@ -43,6 +44,8 @@ class Node:
 
 class Solver:
     def __init__(self, game):
+        self.total_time = 0
+        self.start_time = None
         self.is_solving = False
         self.path = []
         self.game = game
@@ -59,6 +62,7 @@ class Solver:
                         tiles_grid[i][j] != i * self.game.game_size + j + 1 and tiles_grid[i][j] != 0])
 
     def make_heuristic(self, heuristic, cost=False):
+
         def misplaced_tiles(tiles_grid, level=0):
             if not cost: level=0
             return len([1 for i in range(self.game.game_size) for j in range(self.game.game_size) if
@@ -77,10 +81,94 @@ class Solver:
                     j - (tiles_grid[i][j] - 1) % self.game.game_size) for i in range(self.game.game_size) for j in
                  range(self.game.game_size) if tiles_grid[i][j] != 0])
 
-        if heuristic == 'Misplaced' or heuristic == 'Misplaced C':
-            return misplaced_tiles
-        elif heuristic == 'Distance' or heuristic == 'Distance C':
-            return distance
+
+        def gaschnig(candidate, level=0):
+            if not cost: level=0
+
+            res = 0
+            solved = [j for sub in self.game.tiles_grid_completed for j in sub]
+            candidate = [j for sub in candidate for j in sub]
+            while candidate != solved:
+                zi = candidate.index(0)
+                if solved[zi] != 0:
+                    sv = solved[zi]
+                    ci = candidate.index(sv)
+                    candidate[ci], candidate[zi] = candidate[zi], candidate[ci]
+                else:
+                    for i in range(self.game.game_size * self.game.game_size):
+                        if solved[i] != candidate[i]:
+                            candidate[i], candidate[zi] = candidate[zi], candidate[i]
+                            break
+                res += 1
+            return res+level
+
+        def manhattan(candidate, level=0):
+            if not cost: level=0
+
+            solved = [j for sub in self.game.tiles_grid_completed for j in sub]
+            candidate = [j for sub in candidate for j in sub]
+            res = 0
+            for i in range(self.game.game_size * self.game.game_size):
+                if candidate[i] != 0 and candidate[i] != solved[i]:
+                    ci = solved.index(candidate[i])
+                    y = (i // self.game.game_size) - (ci // self.game.game_size)
+                    x = (i % self.game.game_size) - (ci % self.game.game_size)
+                    res += abs(y) + abs(x)
+            return res+level
+
+        def linear_conflicts(candidate, level=0):
+            if not cost: level=0
+            mat=candidate
+            solved = [j for sub in self.game.tiles_grid_completed for j in sub]
+            candidate = [j for sub in candidate for j in sub]
+
+            def count_conflicts(candidate_row, solved_row, size, ans=0):
+                counts = [0 for x in range(size)]
+                for i, tile_1 in enumerate(candidate_row):
+                    if tile_1 in solved_row and tile_1 != 0:
+                        solved_i = solved_row.index(tile_1)
+                        for j, tile_2 in enumerate(candidate_row):
+                            if tile_2 in solved_row and tile_2 != 0 and i != j:
+                                solved_j = solved_row.index(tile_2)
+                                if solved_i > solved_j and i < j:
+                                    counts[i] += 1
+                                if solved_i < solved_j and i > j:
+                                    counts[i] += 1
+                if max(counts) == 0:
+                    return ans * 2
+                else:
+                    i = counts.index(max(counts))
+                    candidate_row[i] = -1
+                    ans += 1
+                    return count_conflicts(candidate_row, solved_row, size, ans)
+
+            res = manhattan(mat)
+            candidate_rows = [[] for y in range(self.game.game_size)]
+            candidate_columns = [[] for x in range(self.game.game_size)]
+            solved_rows = [[] for y in range(self.game.game_size)]
+            solved_columns = [[] for x in range(self.game.game_size)]
+            for y in range(self.game.game_size):
+                for x in range(self.game.game_size):
+                    idx = (y * self.game.game_size) + x
+                    candidate_rows[y].append(candidate[idx])
+                    candidate_columns[x].append(candidate[idx])
+                    solved_rows[y].append(solved[idx])
+                    solved_columns[x].append(solved[idx])
+            for i in range(self.game.game_size):
+                res += count_conflicts(candidate_rows[i], solved_rows[i], self.game.game_size)
+            for i in range(self.game.game_size):
+                res += count_conflicts(candidate_columns[i], solved_columns[i], self.game.game_size)
+            return res+level
+        HEURISTICS = {
+            'Manhattan': manhattan_distance,
+            'Misplaced': misplaced_tiles,
+            'LinearConflict': linear_conflicts,
+            'LinearConf': linear_conflicts,
+            'Gaschnig': gaschnig,
+        }
+
+        return HEURISTICS[heuristic]
+
 
 
 
@@ -105,18 +193,25 @@ class Solver:
     def solve(self):
         if not self.is_solving:
             self.visited_nodes = set()
+            self.frontier = PriorityQueue()
+            self.path= []
             root = Node(None, self.game.tiles_grid,
                         self.game.get_empty_tile(), '', self.heuristic(self.game.tiles_grid), 0)
             self.frontier.push(root)
             self.is_solving = True
+            self.start_time = time.time()
 
         while not self.frontier.empty():
             minimum = self.frontier.pop()
             self.visited_nodes.add(''.join(''.join(str(x) for x in y) for y in minimum.mat))
             self.game.solve_epochs += 1
             if self.correct(minimum.mat) == 0:
+                self.total_time = time.time() - self.start_time
+                if minimum.level>800:
+                    sys.setrecursionlimit(minimum.level+100)
                 self.printPath(minimum)
 
+                print("Total time taken: ", self.total_time)
                 print("Total moves: ", minimum.level)
                 print("Total epochs: ", self.game.solve_epochs)
 
@@ -125,10 +220,9 @@ class Solver:
                     self.game.draw_tiles()
                     self.game.all_sprites.update()
                     self.game.draw()
+                    if minimum.level<60:
+                      pygame.time.wait(70)
 
-                    pygame.time.wait(200)
-
-                self.frontier = PriorityQueue()
                 self.game.solve = False
                 self.game.start_game = True
                 self.is_solving = False

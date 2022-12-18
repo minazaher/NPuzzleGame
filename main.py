@@ -5,7 +5,6 @@ from sprite import *
 from settings import *
 from solver import *
 
-
 class Game:
     def __init__(self, size):
         self.tiles_grid = [[]]
@@ -121,12 +120,21 @@ class Game:
         self.start_game = False
         self.buttons_list = []
         # Fix  the grid for 15, 24 and 35 puzzle
-        self.buttons_list.append(Button(500, 100, 200, 50, "Shuffle", WHITE, BLACK))
-        self.buttons_list.append(Button(500, 170, 200, 50, "Reset", WHITE, BLACK))
-        self.buttons_list.append(Button(500, 310, 200, 50, "Misplaced", WHITE, BLACK))
-        self.buttons_list.append(Button(500, 380, 200, 50, "Distance", WHITE, BLACK))
-        self.buttons_list.append(Button(500, 450, 200, 50, "Misplaced C", WHITE, BLACK))
-        self.buttons_list.append(Button(500, 520, 200, 50, "Distance C", WHITE, BLACK))
+        self.buttons_list.append(Button(500, 100, 200, 50, "Shuffle", WHITE, BLACK,30))
+        self.buttons_list.append(Button(500, 170, 200, 50, "Reset", WHITE, BLACK,30))
+
+        self.buttons_list.append(Button(500, 310, 125, 50, "Misplaced", WHITE, BLACK,18))
+        self.buttons_list.append(Button(650, 310, 125, 50, "Misplaced C", WHITE, BLACK,18))
+
+        self.buttons_list.append(Button(500, 380, 125, 50, "Manhattan", WHITE, BLACK,18))
+        self.buttons_list.append(Button(650, 380, 125, 50, "Manhattan C", WHITE, BLACK,18))
+
+        self.buttons_list.append(Button(500, 450, 125, 50, "Gaschnig", WHITE, BLACK,18))
+        self.buttons_list.append(Button(650, 450, 125, 50, "Gaschnig C", WHITE, BLACK,18))
+
+        self.buttons_list.append(Button(500, 520, 125, 50, "LinearConflict", WHITE, BLACK,15))
+        self.buttons_list.append(Button(650, 520, 125, 50, "LinearConf C", WHITE, BLACK,16))
+
         self.draw_tiles()
 
     def run(self):
@@ -146,17 +154,11 @@ class Game:
                 # else:
                 #     self.high_score = self.elapsed_time
                 # self.save_score()
-
-            if self.start_timer:
-                self.timer = time.time()
-                self.start_timer = False
-            self.elapsed_time = time.time() - self.timer
-
         if self.start_shuffle:
             self.shuffle()
             self.draw_tiles()
             self.shuffle_time += 1
-            if self.shuffle_time > 50:
+            if self.shuffle_time > 80:
                 self.start_shuffle = False
                 self.start_game = True
                 self.start_timer = True
@@ -178,7 +180,7 @@ class Game:
         self.draw_grid()
         for button in self.buttons_list:
             button.draw(self.screen)
-        # UIElement(550, 35, "%.3f" % self.elapsed_time).draw(self.screen)
+        UIElement(550, 35, "%.3f" % sol.total_time).draw(self.screen)
         UIElement(500, 255, "Solve ").draw(self.screen)
         pygame.display.flip()
 
@@ -214,23 +216,23 @@ class Game:
                                                                                            self.tiles_grid[row][col]
 
                             self.draw_tiles()
+
                             # sol.solve()
 
                 for button in self.buttons_list:
-                    available_algo = ["Misplaced", "Distance", "Misplaced C", "Distance C"]
+                    available_algo = ["Misplaced", "Gaschnig", "Misplaced C", "Gaschnig C", "Manhattan", "Manhattan C", "LinearConflict", "LinearConf C"]
                     if button.click(mouse_x, mouse_y):
                         if button.text == "Shuffle":
                             self.shuffle_time = 0
                             self.start_shuffle = True
                         if button.text in available_algo:
                             self.solve_epochs = 0
-                            self.path = []
-                            self.visited = []
                             self.solve = True
-                            if button.text == "Misplaced" or button.text == "Distance":
-                                sol.heuristic = sol.make_heuristic(button.text)
-                            if button.text == "Misplaced C" or button.text == "Distance C":
+                            if button.text[-1] == "C":
                                 sol.heuristic = sol.make_heuristic(button.text.split(' ')[0], True)
+                            else:
+                                sol.heuristic = sol.make_heuristic(button.text)
+
                         if button.text == "Reset":
                             self.new()
 
