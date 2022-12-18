@@ -1,4 +1,4 @@
 # N-PuzzleGame
 ### Python N-Puzzle Slider Solver With GUI 
 #### Built with Pygame
-## Project Documentation [here](./N-Puzzle Solver.pdf)
+## Project Documentation [here](./N-PuzzleSolver.pdf)
