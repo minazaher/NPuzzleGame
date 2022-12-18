@@ -236,13 +236,13 @@ class Game:
                         if button.text == "Reset":
                             self.new()
 
+if __name__ == '__main__':
+    n = int(input("Enter the size of the puzzle: "))
+    game = Game(n)
+    sol = Solver(game)
 
-n = int(input("Enter the size of the puzzle: "))
-game = Game(n)
-sol = Solver(game)
 
-
-while True:
-    game.new()
-    game.run()
-    sol.solve()
+    while True:
+        game.new()
+        game.run()
+        sol.solve()

@@ -2,13 +2,59 @@ from copy import deepcopy
 from heapq import heappush, heappop
 import pygame
 import time,sys
-
 row = [1, 0, -1, 0]
 col = [0, -1, 0, 1]
 moves = ['down', 'left', 'up', 'right']
 
 opposite_direction = {'down': 'up', 'up': 'down', 'left': 'right', 'right': 'left', '': ''}
 
+
+N = 3
+
+
+def getInvCount(arr):
+    arr1 = []
+    for y in arr:
+        for x in y:
+            arr1.append(x)
+    arr = arr1
+    inv_count = 0
+    for i in range(N * N - 1):
+        for j in range(i + 1, N * N):
+            # count pairs(arr[i], arr[j]) such that
+            # i < j and arr[i] > arr[j]
+            if (arr[j] and arr[i] and arr[i] > arr[j]):
+                inv_count += 1
+
+    return inv_count
+
+
+# find Position of blank from bottom
+def findXPosition(puzzle):
+    # start from bottom-right corner of matrix
+    for i in range(N - 1, -1, -1):
+        for j in range(N - 1, -1, -1):
+            if (puzzle[i][j] == 0):
+                return N - i
+
+
+# This function returns true if given
+# instance of N*N - 1 puzzle is solvable
+def isSolvable(puzzle):
+    # Count inversions in given puzzle
+    invCount = getInvCount(puzzle)
+
+    # If grid is odd, return true if inversion
+    # count is even.
+    if (N & 1):
+        return ~(invCount & 1)
+
+    else:  # grid is even
+        pos = findXPosition(puzzle)
+        if (pos & 1):
+            return ~(invCount & 1)
+        else:
+            return invCount & 1
 
 class PriorityQueue:
     def __init__(self):
@@ -79,7 +125,7 @@ class Solver:
             return sum(
                 [abs(i - (tiles_grid[i][j] - 1) // self.game.game_size) + abs(
                     j - (tiles_grid[i][j] - 1) % self.game.game_size) for i in range(self.game.game_size) for j in
-                 range(self.game.game_size) if tiles_grid[i][j] != 0])
+                 range(self.game.game_size) if tiles_grid[i][j] != 0]) +level
 
 
         def gaschnig(candidate, level=0):
@@ -236,10 +282,11 @@ class Solver:
                 if self.is_safe(new_tile_pos[0], new_tile_pos[1]):
                     child = self.new_node(minimum.mat, minimum.empty_tile_pos, new_tile_pos, moves[i],
                                           minimum.level + 1, minimum)
-                    if child.move != opposite_direction[minimum.move] and ''.join(''.join(str(x) for x in y) for y in child.mat)not in self.visited_nodes:
+                    if child.move != opposite_direction[minimum.move]  and ''.join(''.join(str(x) for x in y) for y in child.mat)not in self.visited_nodes:
                         self.game.tiles_grid = child.mat
                         # self.game.draw_tiles()
                         self.frontier.push(child)
+            print(isSolvable(self.game.tiles_grid))
             print(self.game.solve_epochs)
 
 
